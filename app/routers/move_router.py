@@ -8,5 +8,5 @@ move_router = APIRouter(prefix="/move", tags=["moves"])
 @move_router.get("/move/{move}")
 async def get_next_move(request: Request, move: str):
     move_history = request.app.state.move_history
-    request.app.state.llm.invoke({"color": "white", "move_history": move})
-    return calculate_next_move()
+    request.app.state.prompt_template.invoke({"color": "white", "move_history": move})
+    return calculate_next_move(move_history, move)
