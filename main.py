@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage
 
 from app.routers.move_router import move_router
 
@@ -21,8 +22,16 @@ async def lifespan(app: FastAPI):
     app.state.prompt_template = ChatPromptTemplate(
         [("system", app.state.system_prompt)]
     )
-    print(type(app.state.llm))
+    app.state.prompt_template.invoke(
+        {"color": "white", "move_history": app.state.move_history}
+    )
+    app.state.chain = app.state.prompt_template | app.state.llm
+    print(type(app.state.chain))
     print(f"System prompt: {app.state.system_prompt}")
+    result = app.state.chain.invoke(
+        {"color": "white", "move_history": app.state.move_history}
+    )
+    print(result)
     yield
     # Close permanent or shared resources
 
