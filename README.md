@@ -8,4 +8,4 @@ The project relies on [langchain](https://www.langchain.com/langchain) to coordi
 
 Currently the structure is intended to be something like this:
 
-![Diagram](./img/diagram.svg)
+![Diagram](./img/diagram.svg){ width="800" height="600" style="display: block; margin: 0 auto"}
