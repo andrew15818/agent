@@ -1,12 +1,15 @@
 import chess
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from app.services.move_service import calculate_next_move
+from app.services.move_service import LLMManager
 
 move_router = APIRouter(prefix="/move", tags=["moves"])
 
 
+def get_llm_manager(request: Request) -> LLMManager:
+    return request.app.state.llm_manager
+
+
 @move_router.get("/move/{move}")
-async def get_next_move(request: Request, move: str):
-    move_history = request.app.state.move_history
-    request.app.state.prompt_template.invoke({"color": "white", "move_history": move})
-    return calculate_next_move(move_history, move)
+async def get_next_move(move: str, LLMManager=Depends(get_llm_manager)):
+    return calculate_next_move(LLMManager, move)

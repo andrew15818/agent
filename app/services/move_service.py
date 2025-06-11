@@ -10,23 +10,36 @@ from langchain_core.tools import tool
 
 
 class LLMManager:
-    """
-    Group LLM-related methods together in a single class.
-    """
+    """Group LLM-related methods together in a single class."""
 
     def __init__(self):
         self.llm = init_chat_model(os.getenv("MODEL_NAME"), model_provider="mistralai")
+        self.color = "white"
         self.system_prompt = os.getenv("SYSTEM_PROMPT")
         self.move_history = []
         self.prompt_template = ChatPromptTemplate([("system", self.system_prompt)])
         self.prompt_template.invoke(
-            {"color": "white", "move_history": self.move_history}
+            {"color": self.color, "move_history": self.move_history}
         )
         self.chain = self.prompt_template | self.llm
         print(type(self.chain))
         print(f"System prompt: {self.system_prompt}")
 
         pass
+
+    def add_move(self, new_move: str) -> None:
+        """Add move to the history_pile
+        Args:
+         new_move (str): Move to add
+        """
+        self.move_history.append(new_move)
+
+    def pop_move(self) -> str:
+        """Pop move from the history in case not valid.
+        Returns:
+            str: The move just popped
+        """
+        return self.move_history.pop()
 
 
 class BoardManager:
@@ -38,18 +51,16 @@ class BoardManager:
         pass
 
 
-@tool
-def calculate_next_move(history: list[str], current_move: str, color: str) -> str:
+def calculate_next_move(llm_manager: LLMManager, move_played: str) -> str:
     """Get the next move from the LLM given the move history.
 
     Args:
-        history (list[str]): The list of moves made so far.
-        move (str): The current move played.
-        color (str): The color of the current move.
+        llm_manager (LLMManager): Object managing LLM state info and connection.
+        move_played (str): Move just made by player.
     Returns:
         str: The next move in algebraic notation.
     """
-
+    print(f"Processing move: {move_played}")
     return "kf3"
 
 
