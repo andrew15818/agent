@@ -2,6 +2,7 @@ import os
 
 import chess
 import json
+from typing import Optional
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from google import genai
@@ -18,15 +19,11 @@ class LLMManager:
         self.llm = init_chat_model(os.getenv("MODEL_NAME"), model_provider="mistralai")
         self.color = "black"
         self.system_prompt = os.getenv("SYSTEM_PROMPT")
+        self.human_prompt = os.getenv("HUMAN_PROMPT") print(self.human_prompt)
         self.prompt_template = ChatPromptTemplate(
             [
                 ("system", self.system_prompt),
-                (
-                    "human",
-                    """The move history is {move_history} and the current move is {move}. 
-                    Play the best next move with the color {color}. 
-                    Return your result in JSON format with the "move" field having the algebraic notation of your move and a "comment" field commenting on your move choice.""",
-                ),
+                ("human", self.human_prompt),
             ]
         )
         self.prompt_template.invoke(
@@ -43,7 +40,7 @@ class LLMManager:
 
         pass
 
-    def query_next_move(self, move: str):
+    def query_next_move(self, move: str) -> dict[str, str]:
         """Query the LLM for the next move using the history of moves.
         Args:
             move (str): Move just made.
@@ -63,10 +60,22 @@ class LLMManager:
 
         try:
             content = json.loads(response.content)
+            print(f"Response from LLM: {content}")
+            self.board_manager.add_move(content["move"])
         except json.JSONDecodeError:
+            # TODO: How to make  move even if invalid JSON received?
+            print(response.content)
             raise HTTPException(
                 status_code=501, detail="Invalid repsponse received from LLM."
             )
+        
+        outcome = self.board_manager.check_game_outcome()
+
+        if outcome is not None:
+            print(f"Game over with status {outcome.termination}")
+            # TODO: determine what to return when game over
+            # return 
+        return content
 
 
 class BoardManager:
@@ -96,9 +105,17 @@ class BoardManager:
 
     def get_history(self) -> list[str]:
         return self.history
+    
+    def check_game_outcome(self) -> Optional[chess.Outcome]:
+        """
+        Check if the game is over or has any other special situation.
+        Returns:
+            chess.Outcome object if game is terminated, `None` otherwise.
+        """
+        return self.board.outcome()
 
 
-def calculate_next_move(llm_manager: LLMManager, move_played: str) -> str:
+def calculate_next_move(llm_manager: LLMManager, move_played: str) -> dict[str, str]:
     """Get the next move from the LLM given the move history.
 
     Args:
@@ -108,9 +125,9 @@ def calculate_next_move(llm_manager: LLMManager, move_played: str) -> str:
         str: The next move in algebraic notation.
     """
     print(type(llm_manager), move_played)
-    llm_manager.query_next_move(move_played)
+    move = llm_manager.query_next_move(move_played)
 
-    return "kf3"
+    return move
 
 
 def check_if_move_is_valid() -> None:
