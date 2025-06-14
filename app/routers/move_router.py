@@ -1,4 +1,3 @@
-import chess
 from fastapi import APIRouter, Request, Depends
 from app.services.move_service import calculate_next_move
 from app.services.move_service import LLMManager
