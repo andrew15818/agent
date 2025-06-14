@@ -1,30 +1,43 @@
 import os
 
 import chess
+import json
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from google import genai
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.tools import tool
+from langchain_core.messages import BaseMessage
 
 
 class LLMManager:
     """Group LLM-related methods together in a single class."""
 
     def __init__(self):
+        self.board_manager = BoardManager()
         self.llm = init_chat_model(os.getenv("MODEL_NAME"), model_provider="mistralai")
-        self.color = "white"
+        self.color = "black"
         self.system_prompt = os.getenv("SYSTEM_PROMPT")
-        self.move_history = []
-        self.prompt_template = ChatPromptTemplate([("system", self.system_prompt)])
+        self.prompt_template = ChatPromptTemplate(
+            [
+                ("system", self.system_prompt),
+                (
+                    "human",
+                    """The move history is {move_history} and the current move is {move}. 
+                    Play the best next move with the color {color}. 
+                    Return your result in JSON format with the "move" field having the algebraic notation of your move and a "comment" field commenting on your move choice.""",
+                ),
+            ]
+        )
         self.prompt_template.invoke(
-            {"color": self.color, "move_history": self.move_history}
+            {
+                "color": self.color,
+                "move_history": "[]",
+                "move": self.board_manager.get_history(),
+            }
         )
         self.chain = self.prompt_template | self.llm
 
-        self.board_manager = BoardManager()
         print(type(self.chain))
         print(f"System prompt: {self.system_prompt}")
 
@@ -36,20 +49,24 @@ class LLMManager:
             move (str): Move just made.
         """
         self.board_manager.add_move(move)
+        history = self.board_manager.get_history()
+        print(f"History so far: {history}")
 
-    def add_move(self, new_move: str) -> None:
-        """Add move to the history_pile
-        Args:
-         new_move (str): Move to add
-        """
-        pass
+        # Update prompt with new history
+        response = self.chain.invoke(
+            {
+                "color": self.color,
+                "move_history": " ".join(history),
+                "move": move,
+            }
+        )
 
-    def pop_move(self) -> str:
-        """Pop move from the history in case not valid.
-        Returns:
-            str: The move just popped
-        """
-        return self.move_history.pop()
+        try:
+            content = json.loads(response.content)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=501, detail="Invalid repsponse received from LLM."
+            )
 
 
 class BoardManager:
@@ -59,6 +76,7 @@ class BoardManager:
 
     def __init__(self):
         self.board = chess.Board()
+        self.history = []
 
     def add_move(self, move: str) -> None:
         """Check if the move is valid and append it to board.
@@ -70,9 +88,14 @@ class BoardManager:
             HTTP Exception if move is invalid.
         """
         try:
-            self.board.push(move)
+            self.board.push_san(move)
         except chess.InvalidMoveError:
             raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
+
+        self.history.append(move)
+
+    def get_history(self) -> list[str]:
+        return self.history
 
 
 def calculate_next_move(llm_manager: LLMManager, move_played: str) -> str:
@@ -85,7 +108,7 @@ def calculate_next_move(llm_manager: LLMManager, move_played: str) -> str:
         str: The next move in algebraic notation.
     """
     print(type(llm_manager), move_played)
-    llm_manager.add_move(move_played)
+    llm_manager.query_next_move(move_played)
 
     return "kf3"
 
