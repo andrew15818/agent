@@ -12,3 +12,8 @@ def get_llm_manager(request: Request) -> LLMManager:
 @move_router.get("/move/{move}")
 async def get_next_move(move: str, LLMManager=Depends(get_llm_manager)):
     return calculate_next_move(LLMManager, move)
+
+
+@move_router.get("/show_board")
+async def show_board(LLMManager=Depends(get_llm_manager)) -> str:
+    return LLMManager.board_manager.get_board_status()
