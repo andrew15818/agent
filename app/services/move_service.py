@@ -19,7 +19,8 @@ class LLMManager:
         self.llm = init_chat_model(os.getenv("MODEL_NAME"), model_provider="mistralai")
         self.color = "black"
         self.system_prompt = os.getenv("SYSTEM_PROMPT")
-        self.human_prompt = os.getenv("HUMAN_PROMPT") print(self.human_prompt)
+        self.human_prompt = os.getenv("HUMAN_PROMPT")
+        print(self.human_prompt)
         self.prompt_template = ChatPromptTemplate(
             [
                 ("system", self.system_prompt),
@@ -68,13 +69,13 @@ class LLMManager:
             raise HTTPException(
                 status_code=501, detail="Invalid repsponse received from LLM."
             )
-        
+
         outcome = self.board_manager.check_game_outcome()
 
         if outcome is not None:
             print(f"Game over with status {outcome.termination}")
             # TODO: determine what to return when game over
-            # return 
+            # return
         return content
 
 
@@ -105,7 +106,7 @@ class BoardManager:
 
     def get_history(self) -> list[str]:
         return self.history
-    
+
     def check_game_outcome(self) -> Optional[chess.Outcome]:
         """
         Check if the game is over or has any other special situation.
