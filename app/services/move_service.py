@@ -115,6 +115,9 @@ class BoardManager:
         """
         return self.board.outcome()
 
+    def get_board_status(self) -> str:
+        return self.board.__str__()
+
 
 def calculate_next_move(llm_manager: LLMManager, move_played: str) -> dict[str, str]:
     """Get the next move from the LLM given the move history.
