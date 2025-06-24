@@ -27,6 +27,10 @@ class TestLLMManager:
         mock_init_chat_model.return_value = mock_llm
 
         llm_manager = LLMManager()
+        assert llm_manager.color == "black", "LLM Manager should have "
+
+    def test_query_next_move(self):
+        """Ensure proper llm calling and error-handling"""
         pass
 
 
