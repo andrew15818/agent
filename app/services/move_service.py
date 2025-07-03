@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from google import genai
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import BaseMessage
 
 
 class LLMManager:
@@ -17,7 +16,7 @@ class LLMManager:
     def __init__(self):
         self.board_manager = BoardManager()
         self.llm = init_chat_model(os.getenv("MODEL_NAME"), model_provider="mistralai")
-        self.color = "black"
+        self.color = "black"  # TODO: Better manage the color choice.
         self.system_prompt = os.getenv("SYSTEM_PROMPT")
         self.human_prompt = os.getenv("HUMAN_PROMPT")
         print(self.human_prompt)
