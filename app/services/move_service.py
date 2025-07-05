@@ -1,13 +1,15 @@
+import json
 import os
+from typing import Optional
 
 import chess
-import json
-from typing import Optional
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from google import genai
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
+
+from app.schemas.move_schemas import MoveSchema
 
 
 class LLMManager:
@@ -40,11 +42,12 @@ class LLMManager:
 
         pass
 
-    def query_next_move(self, move: str) -> dict[str, str]:
+    def query_next_move(self, move_played: MoveSchema) -> MoveSchema:
         """Query the LLM for the next move using the history of moves.
         Args:
             move (str): Move just made.
         """
+        move = move_played.value
         self.board_manager.add_move(move)
         history = self.board_manager.get_history()
         print(f"History so far: {history}")
@@ -58,6 +61,7 @@ class LLMManager:
             }
         )
 
+        # TODO: Handle illegal moves
         try:
             content = json.loads(response.content)
             print(f"Response from LLM: {content}")
@@ -72,9 +76,12 @@ class LLMManager:
         outcome = self.board_manager.check_game_outcome()
 
         if outcome is not None:
-            print(f"Game over with status {outcome.termination}")
-            # TODO: determine what to return when game over
-            # return
+            print(f"Game over with status {str(outcome.termination)}")
+            return MoveSchema(
+                value="game_over",
+                comment=str(response.comment),
+                game_status=str(outcome.termination),
+            )
         return content
 
 
@@ -118,7 +125,9 @@ class BoardManager:
         return self.board.__str__()
 
 
-def calculate_next_move(llm_manager: LLMManager, move_played: str) -> dict[str, str]:
+def calculate_next_move(
+    llm_manager: LLMManager, move_played: MoveSchema
+) -> dict[str, str]:
     """Get the next move from the LLM given the move history.
 
     Args:

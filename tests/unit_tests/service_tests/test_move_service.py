@@ -1,8 +1,6 @@
 from unittest.mock import MagicMock, Mock, patch
 
-import pytest
-from fastapi.testclient import TestClient
-
+from app.schemas.move_schemas import MoveSchema
 from app.services.move_service import BoardManager, LLMManager, calculate_next_move
 
 
@@ -59,10 +57,10 @@ class TestLLMManager:
         for move in scholars_mate_sequence:
             llm_manager.board_manager.add_move(move)
 
-        result = llm_manager.query_next_move("Nf6")
-        assert result["move"] == "game_over", (
-            f"result should be checkmate, not {result}"
+        result = llm_manager.query_next_move(
+            MoveSchema(value="Nf6", comment="comment", game_status="ongoing")
         )
+        assert result.value == "game_over", f"result should be checkmate, not {result}"
 
 
 @patch("app.services.move_service.init_chat_model")
@@ -82,5 +80,5 @@ def test_calculate_next_move(mock_init_chat_model, setup_env_vars):
     llm_manager.chain.invoke.return_value = mock_response
 
     # Use the scholar's mate in another test
-    result = llm_manager.query_next_move("e4")  # Should be checkmate
+    result = llm_manager.query_next_move(MoveSchema(value="e4", comment="comment"))
     assert isinstance(result, dict), "Result should be dict after checkmate."
