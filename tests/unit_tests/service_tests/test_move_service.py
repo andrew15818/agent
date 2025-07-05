@@ -34,9 +34,35 @@ class TestLLMManager:
             "LLM Manager should be playing black (for now)"
         )
 
-    def test_query_next_move(self):
+    @patch("app.services.move_service.init_chat_model")
+    def test_query_next_move_game_over(self, mock_init_chat_model, setup_env_vars):
         """Ensure proper llm calling and error-handling"""
-        pass
+        mock_llm = Mock()
+        mock_init_chat_model.return_value = mock_llm
+
+        mock_response = Mock()
+        mock_response.content = (
+            '{"move": "Qxf7", "comment": "Playing something before checkmate"}'
+        )
+
+        llm_manager = LLMManager()
+        llm_manager.chain = Mock()
+        llm_manager.chain.invoke.return_value = mock_response
+
+        scholars_mate_sequence = [
+            "e4",
+            "e5",
+            "Qh5",
+            "Nc6",
+            "Bc4",
+        ]
+        for move in scholars_mate_sequence:
+            llm_manager.board_manager.add_move(move)
+
+        result = llm_manager.query_next_move("Nf6")
+        assert result["move"] == "game_over", (
+            f"result should be checkmate, not {result}"
+        )
 
 
 @patch("app.services.move_service.init_chat_model")
@@ -48,16 +74,13 @@ def test_calculate_next_move(mock_init_chat_model, setup_env_vars):
     mock_llm = Mock()
     mock_init_chat_model.return_value = mock_llm
 
+    mock_response = Mock()
+    mock_response.content = '{"move": "e5", "comment": "Lorem ipsum"}'
+
     llm_manager = LLMManager()
-    move_played = "e4"
-    response = llm_manager.query_next_move(move_played)
-    assert isinstance(response, dict), (
-        "Response from `query_next_move` should be a dictionary!"
-    )
+    llm_manager.chain = Mock()
+    llm_manager.chain.invoke.return_value = mock_response
 
-    # TODO: Pass the move sequence to the LLM
-    scholars_mate_sequence = ["e4", "e5", "Qh5", "Nc6", "Bc4", "Nf6"]
-    llm_manager.board_manager.history = scholars_mate_sequence
-
-    result = llm_manager.query_next_move("Qxf7")  # Should be checkmate
+    # Use the scholar's mate in another test
+    result = llm_manager.query_next_move("e4")  # Should be checkmate
     assert isinstance(result, dict), "Result should be dict after checkmate."
