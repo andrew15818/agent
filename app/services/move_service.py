@@ -9,7 +9,7 @@ from google import genai
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
 
-from app.schemas.move_schemas import MoveSchema
+from app.schemas.move_schemas import MoveSchema, GameStatus
 
 
 class LLMManager:
@@ -80,9 +80,13 @@ class LLMManager:
             return MoveSchema(
                 value="game_over",
                 comment=str(response.comment),
-                game_status=str(outcome.termination),
+                game_status=GameStatus.finished,
             )
-        return content
+        return MoveSchema(
+            value=content["move"],
+            comment=content["comment"],
+            game_status=GameStatus.ongoing,
+        )
 
 
 class BoardManager:
