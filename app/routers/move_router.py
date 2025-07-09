@@ -10,6 +10,11 @@ def get_llm_manager(request: Request) -> LLMManager:
     return request.app.state.llm_manager
 
 
+@move_router.post("/start_game", response_model=MoveSchema)
+async def start_game(request: Request, color: str = "black"):
+    request.app.state.llm_manager = LLMManager(color)
+
+
 @move_router.post("/move")
 async def get_next_move(move: MoveSchema, LLMManager=Depends(get_llm_manager)):
     return calculate_next_move(LLMManager, move)

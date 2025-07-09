@@ -15,10 +15,10 @@ from app.schemas.move_schemas import MoveSchema, GameStatus
 class LLMManager:
     """Group LLM-related methods together in a single class."""
 
-    def __init__(self):
+    def __init__(self, color: str = "black"):
         self.board_manager = BoardManager()
         self.llm = init_chat_model(os.getenv("MODEL_NAME"), model_provider="mistralai")
-        self.color = "black"  # TODO: Better manage the color choice.
+        self.color = color  # TODO: Better manage the color choice.
         self.system_prompt = os.getenv("SYSTEM_PROMPT")
         self.human_prompt = os.getenv("HUMAN_PROMPT")
         print(self.human_prompt)
@@ -129,9 +129,7 @@ class BoardManager:
         return self.board.__str__()
 
 
-def calculate_next_move(
-    llm_manager: LLMManager, move_played: MoveSchema
-) -> dict[str, str]:
+def calculate_next_move(llm_manager: LLMManager, move_played: MoveSchema) -> MoveSchema:
     """Get the next move from the LLM given the move history.
 
     Args:
