@@ -1,5 +1,6 @@
 import json
 import os
+import random
 from typing import Optional
 
 import chess
@@ -9,7 +10,7 @@ from google import genai
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
 
-from app.schemas.move_schemas import MoveSchema, GameStatus
+from app.schemas.move_schemas import GameStatus, MoveSchema
 
 
 class LLMManager:
@@ -40,8 +41,6 @@ class LLMManager:
         print(type(self.chain))
         print(f"System prompt: {self.system_prompt}")
 
-        pass
-
     def query_next_move(self, move_played: MoveSchema) -> MoveSchema:
         """Query the LLM for the next move using the history of moves.
         Args:
@@ -67,14 +66,16 @@ class LLMManager:
             print(f"Response from LLM: {content}")
             self.board_manager.add_move(content["move"])
         except json.JSONDecodeError:
-            # TODO: How to make  move even if invalid JSON received?
-            print(response.content)
-            raise HTTPException(
-                status_code=501, detail="Invalid repsponse received from LLM."
-            )
+            # Make random move from now
+            content = {
+                "move": self.board_manager.get_random_move(),
+                "comment": "Probably playing a suboptimal move :(",
+            }
+            self.board_manager.add_move(move)
 
         outcome = self.board_manager.check_game_outcome()
 
+        # TODO: rework the value
         if outcome is not None:
             print(f"Game over with status {str(outcome.termination)}")
             return MoveSchema(
@@ -127,6 +128,15 @@ class BoardManager:
 
     def get_board_status(self) -> str:
         return self.board.__str__()
+
+    def get_random_move(self) -> str:
+        """
+        Get a random legal move from the set of legal moves.
+
+        Returns:
+            str: Algebraic notation of the random move.
+        """
+        return random.choice(list(self.board.legal_moves))
 
 
 def calculate_next_move(llm_manager: LLMManager, move_played: MoveSchema) -> MoveSchema:
