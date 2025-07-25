@@ -634,6 +634,23 @@ mcp = ["mcp (==1.9.3)", "pydantic (>=2.11)"]
 oauth = ["authlib", "itsdangerous"]
 
 [[package]]
+name = "gradio-chessboard"
+version = "0.0.10"
+description = "Gradio component for chessboard interaction"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "gradio_chessboard-0.0.10-py3-none-any.whl", hash = "sha256:c7b943b5f58d8c0814800cb3a18bf8e589bcc97ae7ab4689cc3d6655b854a3ed"},
+    {file = "gradio_chessboard-0.0.10.tar.gz", hash = "sha256:04c1474585f86f79f4609c4f81d1cb20406a470b4978d2155d6075dc8481eaab"},
+]
+
+[package.dependencies]
+gradio = ">=4.0,<6.0"
+
+[package.extras]
+dev = ["build", "twine"]
+
+[[package]]
 name = "gradio-client"
 version = "1.10.4"
 description = "Python library for easily interacting with trained machine learning models"
@@ -2863,4 +2880,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.13"
-content-hash = "e33926e8c7e92683c524d62aa9864f14d4a455381dd558fd37fcb90501cb7158"
+content-hash = "5ed8eac9c8808dcaf41cb473ae1473af5eb9592e386b4efa847a13353cc0ec4f"
