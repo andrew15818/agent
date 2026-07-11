@@ -13,3 +13,8 @@ class MoveSchema(BaseModel):
     value: str
     comment: str = ""
     game_status: GameStatus = GameStatus.not_started
+
+
+class AgentMove(BaseModel):
+    move_san: str
+    comment: str

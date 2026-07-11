@@ -6,7 +6,6 @@ from typing import Optional
 import chess
 from dotenv import load_dotenv
 from fastapi import HTTPException
-from google import genai
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -21,12 +20,12 @@ class LLMManager:
         self.llm = init_chat_model(os.getenv("MODEL_NAME"), model_provider="mistralai")
         self.color = color  # TODO: Better manage the color choice.
         self.system_prompt = os.getenv("SYSTEM_PROMPT")
-        self.human_prompt = os.getenv("HUMAN_PROMPT")
-        print(self.human_prompt)
+        self.user_prompt = os.getenv("USER_PROMPT")
+        print(self.user_prompt)
         self.prompt_template = ChatPromptTemplate(
             [
                 ("system", self.system_prompt),
-                ("human", self.human_prompt),
+                ("human", self.user_prompt),
             ]
         )
         self.prompt_template.invoke(
