@@ -1,11 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum
-
-
-class GameStatus(str, Enum):
-    not_started = "not_started"
-    ongoing = "ongoing"
-    finished = "finished"
+from app.schemas.game_schemas import GameStatus
 
 
 # Standard for communicating move between frontend/backend
