@@ -9,7 +9,8 @@ from fastapi import HTTPException
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
 
-from app.schemas.move_schemas import GameStatus, MoveSchema
+from app.schemas.move_schemas import MoveSchema
+from app.schemas.game_schemas import GameStatus, GameColors
 
 
 class LLMManager:
@@ -97,6 +98,7 @@ class BoardManager:
     def __init__(self):
         self.board = chess.Board()
         self.history = []
+        self.turn = GameColors.white
 
     def add_move(self, move: str) -> None:
         """Check if the move is valid and append it to board.
@@ -113,6 +115,15 @@ class BoardManager:
             raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
 
         self.history.append(move)
+        self.turn = (
+            GameColors.black if self.turn == GameColors.white else GameColors.black
+        )
+
+    def reset_board(self) -> None:
+        """
+        Reset the board for starting a new game
+        """
+        self.board.reset()
 
     def get_history(self) -> list[str]:
         return self.history
@@ -128,14 +139,14 @@ class BoardManager:
     def get_board_status(self) -> str:
         return self.board.__str__()
 
-    def get_random_move(self) -> str:
+    def get_random_move(self) -> chess.Move:
         """
         Get a random legal move from the set of legal moves.
 
         Returns:
             str: Algebraic notation of the random move.
         """
-        return random.choice(list(self.board.legal_moves))
+        return random.choice(([move for move in self.board.legal_moves]))
 
 
 def calculate_next_move(llm_manager: LLMManager, move_played: MoveSchema) -> MoveSchema:

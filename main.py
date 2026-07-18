@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -14,6 +15,8 @@ async def lifespan(app: FastAPI):
 
     app.state.llm_manager = LLMManager()
     app.state.board_manager = BoardManager()
+    app.state.model = os.getenv("model_id")
+
     yield
     # Close permanent or shared resources
 
