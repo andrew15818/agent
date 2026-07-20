@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 
 from langchain.agents import create_agent
 from langchain.tools import tool
@@ -35,13 +36,32 @@ class ChessAgent:
 
         """
         while self.game_status != GameStatus.finished:
+            ## Get User input
             user_prompt = format_user_prompt(
                 self.board_manager.get_history(), color=self.board_manager.turn
             )
             result = self.agent.invoke(
                 {"messages": [{"role": "user", "content": user_prompt}]}
             )
-            print(result)
+            ## Send to Model
+            move, comment = (
+                result.get(
+                    result["structured_response"].move_san,
+                    str(self.board_manager.get_random_move()),
+                ),
+                result.get(
+                    result["structured_response"].comment,
+                    "What a move (placeholder comment)",
+                ),
+            )
+            print(f"Got move {move} and comment {comment}")
+            ## Process Model Output
+            try:
+                self.board_manager.add_move(move)
+            except Exception as e:
+                logging.error(f"Move {move} failed with error {e}")
+
+            ## Decide Next Step
             break
 
     @tool

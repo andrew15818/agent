@@ -16,7 +16,7 @@ The next move is:
 """
 
 
-def format_user_prompt(move_history: list, color: str):
+def format_user_prompt(move_history: list, color: GameColors):
     assert color in GameColors, (
         f"{color} is not one of the valid colors {GameColors.__members__.keys}"
     )
