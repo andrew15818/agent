@@ -4,13 +4,14 @@ import random
 from typing import Optional
 
 import chess
+from agent import ChessAgent
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
 
+from app.schemas.game_schemas import GameColors, GameStatus
 from app.schemas.move_schemas import MoveSchema
-from app.schemas.game_schemas import GameStatus, GameColors
 
 
 class LLMManager:
@@ -159,6 +160,9 @@ def calculate_next_move(llm_manager: LLMManager, move_played: MoveSchema) -> Mov
         str: The next move in algebraic notation.
     """
     print(type(llm_manager), move_played)
+    # TODO:
+    ## Handle User move
+    ### If valid, get move from LLM
     move = llm_manager.query_next_move(move_played)
 
     return move
