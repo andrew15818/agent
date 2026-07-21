@@ -7,9 +7,9 @@ from langchain.tools import tool
 from langchain_ollama import ChatOllama
 
 from app.agent.prompts import SYSTEM_PROMPT, USER_PROMPT, format_user_prompt
-from app.schemas.move_schemas import AgentMove
-from app.schemas.game_schemas import GameStatus, GameColors
-from app.services.move_service import BoardManager
+from app.schemas.move_schemas import AgentMove, MoveSchema
+from app.schemas.game_schemas import GameStatus
+from app.services.board_manager import BoardManager
 
 
 class ChessAgent:
@@ -30,39 +30,48 @@ class ChessAgent:
         """
         self.board_manager.reset_board()
 
-    def run(self):
+    def add_user_move(self, user_move: MoveSchema) -> None:
+        """
+        Ensure the move entered by the player is valid, return error if not
+        """
+        self.board_manager.add_move(user_move.value)
+
+    def run(self, user_move: MoveSchema) -> MoveSchema:
         """
         Entry point for the agent harness. While the game is active, run a move and return it to the user.
-
+        Args:
+            player_move (MoveSchema): Move made by player
+        Returns:
+            MoveSchema containing agent move, comment, and current game status
         """
-        while self.game_status != GameStatus.finished:
-            ## Get User input
-            user_prompt = format_user_prompt(
-                self.board_manager.get_history(), color=self.board_manager.turn
-            )
-            result = self.agent.invoke(
-                {"messages": [{"role": "user", "content": user_prompt}]}
-            )
-            ## Send to Model
-            move, comment = (
-                result.get(
-                    result["structured_response"].move_san,
-                    str(self.board_manager.get_random_move()),
-                ),
-                result.get(
-                    result["structured_response"].comment,
-                    "What a move (placeholder comment)",
-                ),
-            )
-            print(f"Got move {move} and comment {comment}")
-            ## Process Model Output
-            try:
-                self.board_manager.add_move(move)
-            except Exception as e:
-                logging.error(f"Move {move} failed with error {e}")
+        ## Validate user move
+        self.add_user_move(user_move)
 
-            ## Decide Next Step
-            break
+        user_prompt = format_user_prompt(
+            self.board_manager.get_history(), color=self.board_manager.turn
+        )
+        result = self.agent.invoke(
+            {"messages": [{"role": "user", "content": user_prompt}]}
+        )
+        ## Send to Model
+        move, comment = (
+            result.get(
+                result["structured_response"].move_san,
+                str(self.board_manager.get_random_move()),
+            ),
+            result.get(
+                result["structured_response"].comment,
+                "What a move (placeholder comment)",
+            ),
+        )
+        print(f"Got move {move} and comment {comment}")
+        ## Process Model Output
+        try:
+            self.board_manager.add_move(move)
+        except Exception as e:
+            logging.error(f"Move {move} failed with error {e}")
+
+        ## Decide Next Step
 
     @tool
     def is_move_legal(self, move: AgentMove) -> bool:

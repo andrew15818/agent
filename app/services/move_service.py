@@ -4,7 +4,7 @@ import random
 from typing import Optional
 
 import chess
-from agent import ChessAgent
+from app.agent.agent import ChessAgent
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from langchain.chat_models import init_chat_model
@@ -91,66 +91,7 @@ class LLMManager:
         )
 
 
-class BoardManager:
-    """
-    Manage the game board via the chess library.
-    """
-
-    def __init__(self):
-        self.board = chess.Board()
-        self.history = []
-        self.turn = GameColors.white
-
-    def add_move(self, move: str) -> None:
-        """Check if the move is valid and append it to board.
-        Args:
-            move (str): Move to add
-        Returns:
-            None, if  move is valid.
-        Raises:
-            HTTP Exception if move is invalid.
-        """
-        try:
-            self.board.push_san(move)
-        except chess.InvalidMoveError:
-            raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
-
-        self.history.append(move)
-        self.turn = (
-            GameColors.black if self.turn == GameColors.white else GameColors.black
-        )
-
-    def reset_board(self) -> None:
-        """
-        Reset the board for starting a new game
-        """
-        self.board.reset()
-
-    def get_history(self) -> list[str]:
-        return self.history
-
-    def check_game_outcome(self) -> Optional[chess.Outcome]:
-        """
-        Check if the game is over or has any other special situation.
-        Returns:
-            chess.Outcome object if game is terminated, `None` otherwise.
-        """
-        return self.board.outcome()
-
-    def get_board_status(self) -> str:
-        return self.board.__str__()
-
-    def get_random_move(self) -> chess.Move:
-        """
-        Get a random legal move from the set of legal moves.
-
-        Returns:
-            str: Algebraic notation of the random move.
-        """
-        return random.choice(([move for move in self.board.legal_moves]))
-
-
-def calculate_next_move(llm_manager: LLMManager, move_played: MoveSchema) -> MoveSchema:
+def calculate_next_move(agent: ChessAgent, move_played: MoveSchema) -> MoveSchema:
     """Get the next move from the LLM given the move history.
 
     Args:
@@ -159,17 +100,12 @@ def calculate_next_move(llm_manager: LLMManager, move_played: MoveSchema) -> Mov
     Returns:
         str: The next move in algebraic notation.
     """
-    print(type(llm_manager), move_played)
+    print(type(agent), move_played)
     # TODO:
     ## Handle User move
-    ### If valid, get move from LLM
-    move = llm_manager.query_next_move(move_played)
-
+    # move = llm_manager.query_next_move(move_played)
+    move = agent.run(move_played)
     return move
-
-
-def check_if_move_is_valid() -> None:
-    pass
 
 
 if __name__ == "__main__":
