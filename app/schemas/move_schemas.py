@@ -7,7 +7,7 @@ from app.schemas.game_schemas import GameStatus
 class MoveSchema(BaseModel):
     value: str
     comment: str = ""
-    game_status: GameStatus = GameStatus.not_started
+    game_status: GameStatus = GameStatus.ongoing
 
 
 class AgentMove(BaseModel):

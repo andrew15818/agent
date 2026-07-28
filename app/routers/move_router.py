@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, Depends
 from app.services.move_service import calculate_next_move
 from app.agent.agent import ChessAgent
 from app.schemas.move_schemas import MoveSchema
+from app.schemas.game_schemas import GameColors
 
 move_router = APIRouter(prefix="/move", tags=["moves"])
 
@@ -11,8 +12,8 @@ def get_agent(request: Request) -> ChessAgent:
 
 
 @move_router.post("/start_game")
-async def start_game(request: Request, color: str = "black"):
-    request.app.state.agent = ChessAgent(color)
+async def start_game(request: Request, color: GameColors = GameColors.white):
+    request.app.state.agent = ChessAgent(user_color=color)
 
 
 @move_router.post("/move")

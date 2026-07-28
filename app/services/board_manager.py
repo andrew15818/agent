@@ -17,24 +17,27 @@ class BoardManager:
         self.history = []
         self.turn = GameColors.white
 
-    def add_move(self, move: str) -> None:
+    def add_move(self, move: str) -> bool:
         """Check if the move is valid and append it to board.
         Args:
             move (str): Move to add
         Returns:
-            None, if  move is valid.
+            bool, True if move is valid, False otherwise
         Raises:
             HTTP Exception if move is invalid.
         """
         try:
             self.board.push_san(move)
+            self.history.append(move)
+            self.turn = (
+                GameColors.black if self.turn == GameColors.white else GameColors.white
+            )
+            return True
         except chess.InvalidMoveError:
-            raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
+            return False
+            #raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
 
-        self.history.append(move)
-        self.turn = (
-            GameColors.black if self.turn == GameColors.white else GameColors.black
-        )
+
 
     def reset_board(self) -> None:
         """
@@ -64,3 +67,11 @@ class BoardManager:
             str: Algebraic notation of the random move.
         """
         return random.choice(([move for move in self.board.legal_moves]))
+
+    def check_move_legality(self, move_san: str):
+        try:
+            self.board.parse_san(move_san)
+            return True
+        except ValueError:
+            # covers InvalidMoveError, IllegalMoveError, AmbiguousMoveError
+            return False

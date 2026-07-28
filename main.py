@@ -1,13 +1,17 @@
 import os
+import sys
+import logging
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.move_router import move_router
-from app.services.move_service import LLMManager
 from app.services.board_manager import BoardManager
 from app.agent.agent import ChessAgent
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
