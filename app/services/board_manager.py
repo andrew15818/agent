@@ -2,9 +2,12 @@ import random
 from typing import Optional
 
 import chess
+import logging
 from fastapi import HTTPException
 
 from app.schemas.game_schemas import GameColors
+
+logger = logging.getLogger(__name__)
 
 
 class BoardManager:
@@ -35,9 +38,7 @@ class BoardManager:
             return True
         except chess.InvalidMoveError:
             return False
-            #raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
-
-
+            # raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
 
     def reset_board(self) -> None:
         """
@@ -71,7 +72,9 @@ class BoardManager:
     def check_move_legality(self, move_san: str):
         try:
             self.board.parse_san(move_san)
+            logger.info(f"Checking move {move_san} in BoardManager. ")
             return True
-        except ValueError:
+        except ValueError as e:
+            logger.info(f"parse_san failed with error: {e}")
             # covers InvalidMoveError, IllegalMoveError, AmbiguousMoveError
             return False

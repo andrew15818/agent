@@ -28,7 +28,7 @@ class ChessAgent:
         self.board_manager = BoardManager()
 
         # TODO: Figure out how to move tool definition outside of this area.
-        # TODO: Validate move even outside the LLM 
+        # TODO: Validate move even outside the LLM
         @tool
         def is_move_legal(self, move: AgentMove) -> bool:
             """
@@ -38,7 +38,9 @@ class ChessAgent:
             returns:
                 Bool: True if the move san is currently valid, False otherwise.
             """
-            return self.board_manager.check_move_legality(move_san=move.move_san)
+            is_legal = self.board_manager.check_move_legality(move_san=move.move_san)
+            logger.info(f"Is move {move.move_san} legal: {is_legal}")
+            return is_legal
 
         self.is_move_legal = is_move_legal
         self.agent = create_agent(
@@ -51,7 +53,6 @@ class ChessAgent:
         self.game_status = GameStatus.ongoing
         self.initialize_new_game(user_color=user_color)
 
-        
         logger.info("Started new game")
 
     def initialize_new_game(self, user_color: GameColors) -> None:
@@ -122,6 +123,11 @@ class ChessAgent:
         self.add_move(user_move)
 
         agent_move = self.get_agent_move()
+
+        while not self.board_manager.check_move_legality(move_san=agent_move.value):
+            logger.info(f"Move {agent_move} is not legal, trying again.")
+            break
+
         try:
             self.board_manager.add_move(agent_move)
         except Exception as e:
@@ -131,7 +137,7 @@ class ChessAgent:
         logger.info(f"Returning move: {agent_move}")
         return agent_move
 
-    
+
 if __name__ == "__main__":
     from pathlib import Path
 
