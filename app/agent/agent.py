@@ -28,16 +28,18 @@ class ChessAgent:
         self.board_manager = BoardManager()
 
         # TODO: Figure out how to move tool definition outside of this area.
-        # TODO: Validate move even outside the LLM 
+        # TODO: Validate move even outside the LLM
         @tool
-        def is_move_legal(self, move: AgentMove) -> bool:
+        def is_move_legal(move: AgentMove) -> bool:
             """
-            Check user or agent move for legality.
+            Check whether a move is legal given the current board. The function returns a Boolean
+            which confirms the move validity.
             Args:
                 move (AgentMove): User or agent move played
             returns:
                 Bool: True if the move san is currently valid, False otherwise.
             """
+            logger.info("Checking move validity")
             return self.board_manager.check_move_legality(move_san=move.move_san)
 
         self.is_move_legal = is_move_legal
@@ -51,7 +53,6 @@ class ChessAgent:
         self.game_status = GameStatus.ongoing
         self.initialize_new_game(user_color=user_color)
 
-        
         logger.info("Started new game")
 
     def initialize_new_game(self, user_color: GameColors) -> None:
@@ -83,7 +84,7 @@ class ChessAgent:
         Raises:
             HTTPException if the move is illegal.
         """
-        self.board_manager.add_move(move.value)
+        self.board_manager.add_move(str(move.value))
 
     def get_agent_move(self) -> MoveSchema:
         """
@@ -95,19 +96,21 @@ class ChessAgent:
         result = self.agent.invoke(
             {"messages": [{"role": "user", "content": user_prompt}]}
         )
+        structured = result["structured_response"]
+        logger.info(f"Structured response: {structured}")
         move, comment = (
             result.get(
-                result["structured_response"].move_san,
+                structured.move_san,
                 str(self.board_manager.get_random_move()),
             ),
             result.get(
-                result["structured_response"].comment,
+                structured.comment,
                 "What a move (placeholder comment)",
             ),
         )
-        logger.info(f"Model response: move: {move} \t comment {comment}")
+        logger.info(f"Model response: move: {move} \t comment: {comment}")
         agent_move = MoveSchema(value=move, comment=comment)
-        self.add_move(agent_move)
+        # self.add_move(agent_move)
         return agent_move
 
     def run(self, user_move: MoveSchema) -> MoveSchema:
@@ -131,7 +134,7 @@ class ChessAgent:
         logger.info(f"Returning move: {agent_move}")
         return agent_move
 
-    
+
 if __name__ == "__main__":
     from pathlib import Path
 
