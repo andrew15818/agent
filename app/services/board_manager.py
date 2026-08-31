@@ -2,9 +2,12 @@ import random
 from typing import Optional
 
 import chess
+import logging
 from fastapi import HTTPException
 
 from app.schemas.game_schemas import GameColors
+
+logger = logging.getLogger(__name__)
 
 
 class BoardManager:
@@ -27,6 +30,7 @@ class BoardManager:
             HTTP Exception if move is invalid.
         """
         try:
+            move = str(move)
             self.board.push_san(move)
             self.history.append(move)
             self.turn = (
@@ -34,10 +38,9 @@ class BoardManager:
             )
             return True
         except chess.InvalidMoveError:
+            logger.info(f"Failed to add move {move} to board.")
             return False
-            #raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
-
-
+            # raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
 
     def reset_board(self) -> None:
         """
