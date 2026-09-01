@@ -1,13 +1,10 @@
 import logging
-import os
-import json
-import logging
 
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_ollama import ChatOllama
 
-from app.agent.prompts import SYSTEM_PROMPT, USER_PROMPT, format_user_prompt
+from app.agent.prompts import SYSTEM_PROMPT, format_user_prompt
 from app.schemas.move_schemas import AgentMove, MoveSchema
 from app.schemas.game_schemas import GameStatus, GameColors
 from app.services.board_manager import BoardManager
@@ -98,19 +95,16 @@ class ChessAgent:
         )
         structured = result["structured_response"]
         logger.info(f"Structured response: {structured}")
-        move, comment = (
-            result.get(
-                structured.move_san,
-                str(self.board_manager.get_random_move()),
-            ),
-            result.get(
-                structured.comment,
-                "What a move (placeholder comment)",
-            ),
+        move = (
+            structured.move_san
+            if structured
+            else str(self.board_manager.get_random_move())
+        )
+        comment = (
+            structured.comment if structured else "What a move (placeholder comment)",
         )
         logger.info(f"Model response: move: {move} \t comment: {comment}")
-        agent_move = MoveSchema(value=move, comment=comment)
-        # self.add_move(agent_move)
+        agent_move = MoveSchema(value=move, comment=str(comment[0]))
         return agent_move
 
     def run(self, user_move: MoveSchema) -> MoveSchema:
@@ -132,6 +126,7 @@ class ChessAgent:
 
         ## Decide Next Step
         logger.info(f"Returning move: {agent_move}")
+        # TODO: Check for game over
         return agent_move
 
 
