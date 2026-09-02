@@ -1,5 +1,7 @@
 import logging
+import chess
 
+from typing import Optional
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_ollama import ChatOllama
@@ -71,9 +73,10 @@ class ChessAgent:
         self.board_manager.reset_board()
         if self.agent_color == GameColors.white:
             logger.info(f"Will play first move since agent is {self.agent_color}.")
-            self.get_agent_move()
+            move = self.get_agent_move()
+            self.board_manager.add_move(move.value)
 
-    def add_move(self, move: MoveSchema) -> None:
+    def add_move(self, move: MoveSchema) -> bool:
         """
         Add a move to the history, could be user move or agent move.
         Args:
@@ -81,7 +84,26 @@ class ChessAgent:
         Raises:
             HTTPException if the move is illegal.
         """
-        self.board_manager.add_move(str(move.value))
+        return self.board_manager.add_move(str(move.value))
+
+    def make_ply(self, move: MoveSchema, color: GameColors):
+        """
+        Make a single move for either the user or agent.
+        """
+        if not self.add_move(move):
+            logger.error(f"Could not add move {move} for player {color.value}")
+
+        pass
+
+    def check_game_outcome(self) -> None:
+        """
+        Check if the game is over from the board manager.
+        """
+        outcome = self.board_manager.check_game_outcome()
+        if outcome is None:
+            return
+
+        # TODO: Further game-over logic
 
     def get_agent_move(self) -> MoveSchema:
         """
@@ -115,18 +137,22 @@ class ChessAgent:
         Returns:
             MoveSchema containing agent move, comment, and current game status
         """
-        ## Validate user move
-        self.add_move(user_move)
+        self.make_ply(user_move, self.user_color)
 
+        # TODO: Check for game over here
+        self.check_game_outcome()
+
+        # Make agent move
         agent_move = self.get_agent_move()
         try:
-            self.board_manager.add_move(agent_move)
+            self.make_ply(agent_move, self.agent_color)
+            self.check_game_outcome()
         except Exception as e:
-            logging.error(f"Move {agent_move} failed with error {e}")
+            logger.error(f"Move {agent_move} failed: {e}")
 
         ## Decide Next Step
         logger.info(f"Returning move: {agent_move}")
-        # TODO: Check for game over
+        # TODO: Check for game over again
         return agent_move
 
 

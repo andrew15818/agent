@@ -37,10 +37,14 @@ class BoardManager:
                 GameColors.black if self.turn == GameColors.white else GameColors.white
             )
             return True
-        except chess.InvalidMoveError:
-            logger.info(f"Failed to add move {move} to board.")
+        except Exception as e:
+            logger.info(
+                f"Failed to add move {move} to board given history {self.history}"
+            )
             return False
             # raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
+            return False
+        return False
 
     def reset_board(self) -> None:
         """
