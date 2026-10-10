@@ -36,15 +36,15 @@ class BoardManager:
             self.turn = (
                 GameColors.black if self.turn == GameColors.white else GameColors.white
             )
+            logger.info(f"Added move {move} to board history")
+            logger.debug(f"History so far: {self.get_history()}")
             return True
         except Exception as e:
             logger.info(
-                f"Failed to add move {move} to board given history {self.history}"
+                f"Failed to add move {move} to board given history {self.history}: {e}"
             )
             return False
-            # raise HTTPException(status_code=501, detail=f"Move {move} is invalid.")
-            return False
-        return False
+        return True
 
     def reset_board(self) -> None:
         """

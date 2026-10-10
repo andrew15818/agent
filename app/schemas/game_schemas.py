@@ -1,4 +1,5 @@
 from enum import Enum
+from pydantic import BaseModel
 
 
 class GameStatus(str, Enum):
@@ -13,3 +14,8 @@ class GameColors(int, Enum):
 
     def __str__(self):
         return self.name
+
+
+class GameOutcome(BaseModel):
+    winner: GameColors
+    reason: str

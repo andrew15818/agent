@@ -8,7 +8,7 @@ from langchain_ollama import ChatOllama
 
 from app.agent.prompts import SYSTEM_PROMPT, format_user_prompt
 from app.schemas.move_schemas import AgentMove, MoveSchema
-from app.schemas.game_schemas import GameStatus, GameColors
+from app.schemas.game_schemas import GameStatus, GameColors, GameOutcome
 from app.services.board_manager import BoardManager
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class ChessAgent:
         """
         Create new agent and initializes new game, setting the user and agent colors as indicated.
         """
+        # TODO:
         model = ChatOllama(model=model_id, temperature=0.2)
         self.board_manager = BoardManager()
 
@@ -95,7 +96,16 @@ class ChessAgent:
 
         pass
 
-    def check_game_outcome(self) -> None:
+    def resolve_game_outcome(self, outcome: chess.Outcome) -> GameOutcome:
+        # TODO: Fill this out later for more complex end-status parsing
+        """
+        Properly parse the chess.Outcome, i.e. a wrapper around chess.Outcome.
+        outcome (chess.Outcome):
+        """
+        return GameOutcome(winner=GameColors.white, reason="No particular reason :^3")
+        pass
+
+    def check_game_outcome(self) -> Optional[GameOutcome]:
         """
         Check if the game is over from the board manager.
         """
@@ -104,6 +114,9 @@ class ChessAgent:
             return
 
         # TODO: Further game-over logic
+        logger.info(f"Outcome: {outcome}")
+        winner = GameColors.white if outcome.winner == chess.WHITE else GameColors.black
+        return GameOutcome(winner=winner, reason="Hello there:D")
 
     def get_agent_move(self) -> MoveSchema:
         """
@@ -115,6 +128,8 @@ class ChessAgent:
         result = self.agent.invoke(
             {"messages": [{"role": "user", "content": user_prompt}]}
         )
+        logger.debug(f"Result coming from LLM: {result}")
+        # TODO: Sometimes small models don't include structured response
         structured = result["structured_response"]
         logger.info(f"Structured response: {structured}")
         move = (
@@ -129,7 +144,7 @@ class ChessAgent:
         agent_move = MoveSchema(value=move, comment=str(comment[0]))
         return agent_move
 
-    def run(self, user_move: MoveSchema) -> MoveSchema:
+    def run(self, user_move: MoveSchema) -> MoveSchema | GameOutcome:
         """
         Entry point for the agent loop. While the game is active, run a move and return it to the user.
         Args:
@@ -140,13 +155,18 @@ class ChessAgent:
         self.make_ply(user_move, self.user_color)
 
         # TODO: Check for game over here
-        self.check_game_outcome()
+        outcome = self.check_game_outcome()
+        if outcome is not None:
+            return outcome
 
         # Make agent move
         agent_move = self.get_agent_move()
         try:
             self.make_ply(agent_move, self.agent_color)
-            self.check_game_outcome()
+            outcome = self.check_game_outcome()
+            if outcome is not None:
+                return outcome
+
         except Exception as e:
             logger.error(f"Move {agent_move} failed: {e}")
 
@@ -158,11 +178,17 @@ class ChessAgent:
 
 if __name__ == "__main__":
     from pathlib import Path
-
+    import sys
     from dotenv import load_dotenv
 
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info("Hello world")
     env_path = Path(__file__).parent.parent.parent / ".env"
     load_dotenv(env_path)
-    agent = ChessAgent()
-    agent.initialize_new_game(user_color=GameColors.black)
-    agent.run(user_move=MoveSchema(value="e4", comment="Hello:D"))
+    agent = ChessAgent(user_color=GameColors.white)
+    # agent.board_manager.history = ["e4", "e5"]  # , "Qh5", "Nc6", "Bc4", "Nf6"]
+    for move in ["e4", "e5", "Qh5", "Nc6", "Bc4", "Nf6"]:
+        agent.board_manager.add_move(move)
+        print(f"{agent.board_manager.get_history()}")
+    agent.run(user_move=MoveSchema(value="Qxf7", comment="Hello:D"))

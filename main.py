@@ -10,7 +10,7 @@ from app.routers.move_router import move_router
 from app.services.board_manager import BoardManager
 from app.agent.agent import ChessAgent
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
